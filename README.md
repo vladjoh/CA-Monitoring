@@ -19,9 +19,9 @@ Detects when a Conditional Access policy is soft deleted. Adds a `RiskFlag` that
 
 ## Requirements
 
-- Microsoft Entra ID
+- Microsoft Entra ID P1 
 - Log Analytics Workspace with `AuditLogs` streaming enabled
 - Azure Monitor alert rule per query
 - Action Group with Email / SMS ot both
 
-For more info how to setup visit: 
+For more info how to setup visit: https://www.need4.cloud/post/monitoring-conditional-access-policies-in-entra
