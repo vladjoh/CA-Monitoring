@@ -1,0 +1,28 @@
+AuditLogs
+| where TimeGenerated >= ago(5m)
+| where Category == "Policy"
+| where OperationName == "Delete conditional access policy"
+| extend
+    ChangeType   = "🔴 DELETE",
+    PolicyName   = tostring(TargetResources[0].displayName),
+    PolicyId     = tostring(TargetResources[0].id),
+    Actor        = tostring(InitiatedBy.user.userPrincipalName),
+    ActorIP      = tostring(InitiatedBy.user.ipAddress),
+    ActorApp     = tostring(InitiatedBy.app.displayName),
+    Result       = tostring(ResultType),
+    LastConfig   = tostring(TargetResources[0].modifiedProperties)
+| extend
+    RiskFlag     = iff(Actor == "", "🚨 CRITICAL – Deleted by App/Service Principal", "⚠️ Deleted by User Account")
+| project
+    TimeGenerated,
+    ChangeType,
+    PolicyName,
+    PolicyId,
+    Actor,
+    RiskFlag,
+    ActorIP,
+    ActorApp,
+    Result,
+    LastConfig,
+    CorrelationId
+| order by TimeGenerated desc

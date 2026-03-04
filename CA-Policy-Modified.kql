@@ -1,0 +1,39 @@
+AuditLogs
+| where TimeGenerated >= ago(5m)
+| where Category == "Policy"
+| where OperationName == "Update conditional access policy"
+| extend
+    ChangeType   = "🟡 MODIFY",
+    PolicyName   = tostring(TargetResources[0].displayName),
+    PolicyId     = tostring(TargetResources[0].id),
+    Actor        = tostring(InitiatedBy.user.userPrincipalName),
+    ActorIP      = tostring(InitiatedBy.user.ipAddress),
+    ActorApp     = tostring(InitiatedBy.app.displayName),
+    Result       = tostring(ResultType)
+| mv-expand ModProp = TargetResources[0].modifiedProperties
+| extend
+    ChangedField = tostring(ModProp.displayName),
+    OldValue     = tostring(ModProp.oldValue),
+    NewValue     = tostring(ModProp.newValue)
+| where ChangedField != ""
+| extend
+    RiskFlag     = iff(
+                     ChangedField has_any ("state","conditions","grantControls"),
+                     "🔴 High-Impact Field Changed",
+                     "🟡 Minor Field Changed"
+                   )
+| project
+    TimeGenerated,
+    ChangeType,
+    PolicyName,
+    PolicyId,
+    Actor,
+    ActorIP,
+    ActorApp,
+    Result,
+    ChangedField,
+    OldValue,
+    NewValue,
+    RiskFlag,
+    CorrelationId
+| order by TimeGenerated desc
